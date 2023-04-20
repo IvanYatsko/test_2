@@ -46,7 +46,7 @@ const textErrors = (key, value) => {
     case 'type':
       return `Invalid ${value}`;
     case 'isEqual':
-      return `Must match the password ${value}`;
+      return 'Must match the password field';
     case 'uppercase':
       return `Minimum ${value} character in upper case`;
     case 'number':
@@ -58,7 +58,7 @@ const textErrors = (key, value) => {
   }
 };
 
-const FORM = document.querySelector('.form');
+const FORM = document.getElementById('form');
 
 const createError = (input, key) => {
   const text = textErrors(key, checkFields[input.id][key]);
@@ -122,9 +122,7 @@ const validation = (form) => {
           }
           break;
         case 'isEqual':
-          if (
-            input.value !== document.getElementById(checkFields[input.id][key])
-          ) {
+          if (input.value !== document.getElementById('inputPassword1').value) {
             return true;
           }
           break;
@@ -158,9 +156,15 @@ const validation = (form) => {
   return result;
 };
 
-FORM.addEventListener('submit', (e) => {
+FORM.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (validation(e.target)) {
-    alert('It is good');
+    const data = new FormData(FORM);
+    console.log(Object.fromEntries(data.entries()));
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+      method: 'POST',
+      body: data,
+    });
+    const result = await response.json();
   }
 });
