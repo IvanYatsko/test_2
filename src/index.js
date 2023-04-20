@@ -1,34 +1,35 @@
 import './styles.scss';
 
+const EMAIL_REGEXP = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/iu;
 const checkFields = {
   inputName: {
+    required: true,
     min: 2,
     max: 25,
-    required: true,
   },
   inputLastName: {
+    required: true,
     min: 2,
     max: 25,
-    required: true,
   },
   inputDate: {
-    maxDate: 'today',
     required: true,
+    maxDate: 'today',
   },
   inputEmail: {
-    type: 'Email',
     required: true,
+    type: 'Email',
   },
   inputPassword1: {
+    required: true,
     min: 8,
     uppercase: 1,
     number: 1,
     specialCharacter: 1,
-    required: true,
   },
   inputPassword2: {
-    isEqual: 'inputPassword1',
     required: true,
+    isEqual: 'inputPassword1',
   },
 };
 
@@ -63,65 +64,94 @@ const createError = (input, key) => {
   const text = textErrors(key, checkFields[input.id][key]);
   const parent = input.parentNode;
   const errorDiv = document.createElement('div');
+  errorDiv.classList.add(input.id);
   errorDiv.textContent = text;
 
   input.classList.add('is-invalid');
   parent.append(errorDiv);
 };
 
+const clearError = (input) => {
+  const parent = input.parentNode;
+  if (parent.lastChild.classList?.contains(input.id)) {
+    parent.removeChild(parent.lastChild);
+    input.classList.remove('is-invalid');
+  }
+};
+
+const dateVerification = (date) => {
+  const current = new Date();
+  const chosen = new Date(date);
+  if (chosen > current) {
+    return true;
+  }
+  return undefined;
+};
+
 const validation = (form) => {
   let result = true;
-  let err;
 
   form?.querySelectorAll('.form-control').forEach((input) => {
+    clearError(input);
+
     const errors = Object.keys(checkFields[input.id]).find((key) => {
       switch (key) {
         case 'required':
-          if (input.value) {
-            err = key;
+          if (!input.value) {
+            return true;
           }
           break;
         case 'min':
-          if (input.value >= checkFields[input.id][key]) {
-            err = key;
+          if (input.value.length < checkFields[input.id][key]) {
+            return true;
           }
           break;
         case 'max':
-          if (input.value <= checkFields[input.id][key]) {
-            err = key;
+          if (input.value.length > checkFields[input.id][key]) {
+            return true;
           }
           break;
-        // case 'maxDate':
-        //   'хз';
-        //   break;
-        // case 'type':
-        //   'РЕГУЛЯРКУ';
-        //   break;
+        case 'maxDate':
+          if (dateVerification(input.value)) {
+            return true;
+          }
+          break;
+        case 'type':
+          if (!EMAIL_REGEXP.test(input.value)) {
+            return true;
+          }
+          break;
         case 'isEqual':
           if (
             input.value !== document.getElementById(checkFields[input.id][key])
           ) {
-            err = key;
+            return true;
           }
           break;
-        // case 'uppercase':
-        //   'РЕГУЛЯРКУ';
-        //   break;
-        // case 'number':
-        //   'РЕГУЛЯРКУ';
-        //   break;
-        // case 'specialCharacter':
-        //   'РЕГУЛЯРКУ !@#$%';
-        //   break;
+        case 'uppercase':
+          if (input.value === input.value.toLowerCase()) {
+            return true;
+          }
+          break;
+        case 'number':
+          if (!input.value.match(/[0-9]/)) {
+            return true;
+          }
+          break;
+        case 'specialCharacter':
+          if (!input.value.match(/[!@#$%]/)) {
+            return true;
+          }
+          break;
         default:
-          return true;
+          return false;
       }
-      return !err;
+      return false;
     });
 
-    if (!errors) {
+    if (errors) {
       result = false;
-      createError(input, err);
+      createError(input, errors);
     }
   });
 
